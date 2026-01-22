@@ -11,7 +11,7 @@ describe("Syncra CLI", () => {
     const output = await new Response(proc.stdout).text();
     await proc.exited;
 
-    expect(output).toContain("Syncra v1.0.2");
+    expect(output).toContain("Syncra v1.0.4");
     expect(output).toContain("Vine Harvest Group LLC");
     expect(output).toContain("Examples:");
     expect(output).toContain("Colors:");
@@ -27,7 +27,7 @@ describe("Syncra CLI", () => {
     const output = await new Response(proc.stdout).text();
     await proc.exited;
 
-    expect(output).toContain("Syncra v1.0.2");
+    expect(output).toContain("Syncra v1.0.4");
     expect(proc.exitCode).toBe(0);
   });
 

@@ -6,7 +6,7 @@
 [![Bun](https://img.shields.io/badge/bun-%3E=1.0.0-black)](https://bun.sh)
 
 **Author:** Vine Harvest Group LLC
-**Version:** v1.0.3
+**Version:** v1.0.4
 
 ## 📖 Description
 
