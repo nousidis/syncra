@@ -76,7 +76,7 @@ async function logWithPrefix(name: string, color: number, stream: ReadableStream
 // Show help message
 function showHelp(): void {
     console.log(`
-\x1b[1;36mSyncra v1.0.1\x1b[0m
+\x1b[1;36mSyncra v1.0.2\x1b[0m
 \x1b[1;36mAuthor:\x1b[0m Vine Harvest Group LLC
 \x1b[1;36mDescription:\x1b[0m A simple replacement for Concurrently using Bun runtime
 
@@ -96,7 +96,7 @@ function showHelp(): void {
 interface ParsedCommand {
     label: string;
     color: number;
-    command: string[];
+    command: string;
 }
 
 function parseCommandArg(arg: string, index: number): ParsedCommand {
@@ -131,9 +131,7 @@ function parseCommandArg(arg: string, index: number): ParsedCommand {
         process.exit(1);
     }
 
-    const command = splitRespectingQuotes(commandStr, ' ', true);
-
-    return { label, color, command };
+    return { label, color, command: commandStr };
 }
 
 // Check for help flag early
@@ -148,7 +146,12 @@ const commands = args.map((arg, index) => parseCommandArg(arg, index));
 // Spawn all processes
 const processes = commands.map(({ label, color, command }) => {
     try {
-        const proc = Bun.spawn(command, {
+        // Wrap command in shell for cross-platform shell execution
+        const shellCommand = process.platform === 'win32'
+            ? ['cmd', '/c', command]
+            : ['/bin/sh', '-c', command];
+
+        const proc = Bun.spawn(shellCommand, {
             stdout: 'pipe',
             stderr: 'pipe',
         });

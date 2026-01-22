@@ -6,7 +6,7 @@
 [![Bun](https://img.shields.io/badge/bun-%3E=1.0.0-black)](https://bun.sh)
 
 **Author:** Vine Harvest Group LLC
-**Version:** v1.0.1
+**Version:** v1.0.2
 
 ## 📖 Description
 
@@ -123,10 +123,10 @@ Syncra properly handles quoted arguments, allowing you to pass complex JavaScrip
 
 ```bash
 syncra \
-  'api,blue,bun run src/api/server.ts' \
-  'web,magenta,bun run dev' \
-  'db,green,docker compose up -d postgres' \
-  'redis,red,docker compose up -d redis'
+  "api,blue,bun run src/api/server.ts" \
+  "web,magenta,bun run dev" \
+  "db,green,docker compose up -d postgres" \
+  "redis,red,docker compose up -d redis"
 ```
 
 ## 🎨 Available Colors
