@@ -76,7 +76,7 @@ async function logWithPrefix(name: string, color: number, stream: ReadableStream
 // Show help message
 function showHelp(): void {
     console.log(`
-\x1b[1;36mSyncra v1.0.0\x1b[0m
+\x1b[1;36mSyncra v1.0.1\x1b[0m
 \x1b[1;36mAuthor:\x1b[0m Vine Harvest Group LLC
 \x1b[1;36mDescription:\x1b[0m A simple replacement for Concurrently using Bun runtime
 
