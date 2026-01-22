@@ -1,6 +1,6 @@
 {
   "name": "syncra",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A lightweight, fast alternative to Concurrently built for the Bun runtime.",
   "main": "index.ts",
   "module": "index.ts",
