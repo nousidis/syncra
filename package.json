@@ -27,12 +27,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/syncra.git"
+    "url": "https://github.com/vineharvestgroup/syncra.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/syncra/issues"
+    "url": "https://github.com/vineharvestgroup/syncra/issues"
   },
-  "homepage": "https://github.com/yourusername/syncra#readme",
+  "homepage": "https://github.com/vineharvestgroup/syncra#readme",
   "engines": {
     "bun": ">=1.0.0"
   },

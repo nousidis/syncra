@@ -81,12 +81,12 @@ function showHelp(): void {
 \x1b[1;36mDescription:\x1b[0m A simple replacement for Concurrently using Bun runtime
 
 \x1b[1;36mUsage:\x1b[0m
-  syncra 'command1' 'command2' ...
+  syncra "command1" "command2" ...
 
 \x1b[1;36mExamples:\x1b[0m
-  syncra 'docker compose up' 'bunx --bun vite'
-  syncra 'container,docker compose up' 'bun-cli,bunx --bun vite'
-  syncra 'backend,red,bun run server.ts' 'frontend,cyan,bunx --bun vite'
+  syncra "docker compose up" "bunx --bun vite"
+  syncra "container,docker compose up" "bun-cli,bunx --bun vite"
+  syncra "backend,red,bun run server.ts" "frontend,cyan,bunx --bun vite"
 
 \x1b[1;36mColors:\x1b[0m ${COLOR_NAMES.join(', ')}
 `);

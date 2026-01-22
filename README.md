@@ -52,19 +52,19 @@ yarn add syncra
 ### Basic Syntax
 
 ```bash
-syncra 'command1' 'command2' 'command3'
+syncra "command1" "command2" "command3"
 ```
 
 Or using bunx (no installation required):
 
 ```bash
-bunx syncra 'command1' 'command2' 'command3'
+bunx syncra "command1" "command2" "command3"
 ```
 
 Or using npx:
 
 ```bash
-npx syncra 'command1' 'command2' 'command3'
+npx syncra "command1" "command2" "command3"
 ```
 
 ### Examples
@@ -72,7 +72,7 @@ npx syncra 'command1' 'command2' 'command3'
 #### 1. Run Multiple Commands
 
 ```bash
-syncra 'docker compose up' 'bunx --bun vite'
+syncra "docker compose up" "bunx --bun vite"
 ```
 
 This will run both Docker Compose and Vite dev server concurrently, each with a default label and color.
@@ -80,7 +80,7 @@ This will run both Docker Compose and Vite dev server concurrently, each with a 
 #### 2. Custom Labels
 
 ```bash
-syncra 'container,docker compose up' 'vite-dev,bunx --bun vite'
+syncra "container,docker compose up" "vite-dev,bunx --bun vite"
 ```
 
 Output will show:
@@ -90,7 +90,7 @@ Output will show:
 #### 3. Custom Colors and Labels
 
 ```bash
-syncra 'backend,red,bun run server.ts' 'frontend,cyan,bunx --bun vite' 'db,green,docker compose up postgres'
+syncra "backend,red,bun run server.ts" "frontend,cyan,bunx --bun vite" "db,green,docker compose up postgres"
 ```
 
 Each process gets a custom label and color for easy visual identification.
@@ -158,20 +158,21 @@ Commands can be specified in three formats:
 
 **No escaping needed!** Use this simple pattern:
 
-- **Outer quotes:** Use double quotes (`"`)
-- **Inner quotes:** Use single quotes (`'`)
+- **Outer quotes:** Always use double quotes (`"`)
+- **Inner quotes:** Use single quotes, when needed only inside (`'`)
 
 ### Examples:
 
-✅ **Good - No escaping:**
+✅ **Good - Escape Double Quotes string:**
 ```bash
 syncra "test,bun -e \"console.log('Hello')\""
 ```
 
-❌ **Avoid - Complex escaping:**
+❌ **Avoid – Single Quotes strings:**
 ```bash
-syncra 'test,bun -e "console.log('\''Hello'\'')"'  # Works but ugly
+syncra 'test,bun -e "console.log('Hello')"' 
 ```
+This command will not execute because bun -e requires double quotes for the command string.
 
 ### Why This Works:
 
@@ -190,26 +191,26 @@ syncra "server,blue,bun -e \"Bun.serve({ port: 3000, fetch: () => new Response('
 
 ```bash
 syncra \
-  'backend,blue,bun run server.ts' \
-  'frontend,cyan,bun run dev' \
-  'tailwind,green,bunx tailwindcss -i ./src/input.css -o ./dist/output.css --watch'
+  "backend,blue,bun run server.ts" \
+  "frontend,cyan,bun run dev" \
+  "tailwind,green,bunx tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
 ```
 
 ### Microservices
 
 ```bash
 syncra \
-  'auth,red,bun run services/auth/index.ts' \
-  'api,blue,bun run services/api/index.ts' \
-  'worker,green,bun run services/worker/index.ts'
+  "auth,red,bun run services/auth/index.ts" \
+  "api,blue,bun run services/api/index.ts" \
+  "worker,green,bun run services/worker/index.ts"
 ```
 
 ### Docker + Development Server
 
 ```bash
 syncra \
-  'containers,yellow,docker compose up' \
-  'dev,magenta,bun --hot index.ts'
+  "containers,yellow,docker compose up" \
+  "dev,magenta,bun --hot index.ts"
 ```
 
 ## 🆘 Help
