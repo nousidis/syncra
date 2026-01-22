@@ -2,11 +2,11 @@
 
 **A lightweight, fast alternative to Concurrently built for the Bun runtime**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/syncra)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/vineharvestgroup/syncra)
 [![Bun](https://img.shields.io/badge/bun-%3E=1.0.0-black)](https://bun.sh)
 
 **Author:** Vine Harvest Group LLC
-**Version:** v1.0.2
+**Version:** v1.0.3
 
 ## 📖 Description
 
