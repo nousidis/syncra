@@ -29,10 +29,22 @@ Perfect for development workflows where you need to run multiple processes simul
 
 - [Bun](https://bun.sh) v1.0.0 or higher
 
-### Install Dependencies
+### Install Syncra
 
 ```bash
-bun install
+bun add syncra
+```
+
+Or with npm:
+
+```bash
+npm install syncra
+```
+
+Or with yarn:
+
+```bash
+yarn add syncra
 ```
 
 ## 🚀 Usage
@@ -40,7 +52,19 @@ bun install
 ### Basic Syntax
 
 ```bash
-bun index.ts 'command1' 'command2' 'command3'
+syncra 'command1' 'command2' 'command3'
+```
+
+Or using bunx (no installation required):
+
+```bash
+bunx syncra 'command1' 'command2' 'command3'
+```
+
+Or using npx:
+
+```bash
+npx syncra 'command1' 'command2' 'command3'
 ```
 
 ### Examples
@@ -48,7 +72,7 @@ bun index.ts 'command1' 'command2' 'command3'
 #### 1. Run Multiple Commands
 
 ```bash
-bun index.ts 'docker compose up' 'bunx --bun vite'
+syncra 'docker compose up' 'bunx --bun vite'
 ```
 
 This will run both Docker Compose and Vite dev server concurrently, each with a default label and color.
@@ -56,7 +80,7 @@ This will run both Docker Compose and Vite dev server concurrently, each with a 
 #### 2. Custom Labels
 
 ```bash
-bun index.ts 'container,docker compose up' 'vite-dev,bunx --bun vite'
+syncra 'container,docker compose up' 'vite-dev,bunx --bun vite'
 ```
 
 Output will show:
@@ -66,7 +90,7 @@ Output will show:
 #### 3. Custom Colors and Labels
 
 ```bash
-bun index.ts 'backend,red,bun run server.ts' 'frontend,cyan,bunx --bun vite' 'db,green,docker compose up postgres'
+syncra 'backend,red,bun run server.ts' 'frontend,cyan,bunx --bun vite' 'db,green,docker compose up postgres'
 ```
 
 Each process gets a custom label and color for easy visual identification.
@@ -76,19 +100,19 @@ Each process gets a custom label and color for easy visual identification.
 **Simple approach - Use double quotes outside, single quotes inside:**
 
 ```bash
-bun index.ts "ticker,red,bun -e \"console.log('Hello')\""
+syncra "ticker,red,bun -e \"console.log('Hello')\""
 ```
 
 **For complex commands with nested quotes:**
 
 ```bash
-bun index.ts "ticker,red,bun -e \"setInterval(() => console.log('Tick'), 1000)\""
+syncra "ticker,red,bun -e \"setInterval(() => console.log('Tick'), 1000)\""
 ```
 
 **Multiple processes with quotes:**
 
 ```bash
-bun index.ts \
+syncra \
   "api,blue,bun -e \"Bun.serve({ port: 3000, fetch: () => new Response('OK') })\"" \
   "log,green,bun -e \"setInterval(() => console.log('Running...'), 2000)\""
 ```
@@ -98,7 +122,7 @@ Syncra properly handles quoted arguments, allowing you to pass complex JavaScrip
 #### 5. Real-World Development Setup
 
 ```bash
-bun index.ts \
+syncra \
   'api,blue,bun run src/api/server.ts' \
   'web,magenta,bun run dev' \
   'db,green,docker compose up -d postgres' \
@@ -141,12 +165,12 @@ Commands can be specified in three formats:
 
 ✅ **Good - No escaping:**
 ```bash
-bun index.ts "test,bun -e \"console.log('Hello')\""
+syncra "test,bun -e \"console.log('Hello')\""
 ```
 
 ❌ **Avoid - Complex escaping:**
 ```bash
-bun index.ts 'test,bun -e "console.log('\''Hello'\'')"'  # Works but ugly
+syncra 'test,bun -e "console.log('\''Hello'\'')"'  # Works but ugly
 ```
 
 ### Why This Works:
@@ -157,7 +181,7 @@ When you use double quotes on the outside, your shell passes the inner double qu
 
 ```bash
 # Start a Bun server with inline code
-bun index.ts "server,blue,bun -e \"Bun.serve({ port: 3000, fetch: () => new Response('Hello!') })\""
+syncra "server,blue,bun -e \"Bun.serve({ port: 3000, fetch: () => new Response('Hello!') })\""
 ```
 
 ## 🛠️ Common Use Cases
@@ -165,7 +189,7 @@ bun index.ts "server,blue,bun -e \"Bun.serve({ port: 3000, fetch: () => new Resp
 ### Full-Stack Development
 
 ```bash
-bun index.ts \
+syncra \
   'backend,blue,bun run server.ts' \
   'frontend,cyan,bun run dev' \
   'tailwind,green,bunx tailwindcss -i ./src/input.css -o ./dist/output.css --watch'
@@ -174,7 +198,7 @@ bun index.ts \
 ### Microservices
 
 ```bash
-bun index.ts \
+syncra \
   'auth,red,bun run services/auth/index.ts' \
   'api,blue,bun run services/api/index.ts' \
   'worker,green,bun run services/worker/index.ts'
@@ -183,7 +207,7 @@ bun index.ts \
 ### Docker + Development Server
 
 ```bash
-bun index.ts \
+syncra \
   'containers,yellow,docker compose up' \
   'dev,magenta,bun --hot index.ts'
 ```
@@ -193,9 +217,9 @@ bun index.ts \
 Display help information:
 
 ```bash
-bun index.ts --help
+syncra --help
 # or
-bun index.ts -h
+syncra -h
 ```
 
 ## 🧪 Testing

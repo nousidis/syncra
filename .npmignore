@@ -1,0 +1,21 @@
+# Development files
+*.test.ts
+*.test.js
+tsconfig.json
+bun.lock
+
+# Documentation
+CLAUDE.md
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+

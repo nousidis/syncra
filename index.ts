@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 const args = Bun.argv.slice(2);
 
 // Color palette for process output

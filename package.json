@@ -1,12 +1,45 @@
 {
   "name": "syncra",
+  "version": "1.0.0",
+  "description": "A lightweight, fast alternative to Concurrently built for the Bun runtime.",
+  "main": "index.ts",
   "module": "index.ts",
   "type": "module",
+  "bin": {
+    "syncra": "./index.ts"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "keywords": [
+    "concurrent",
+    "concurrently",
+    "parallel",
+    "processes",
+    "bun",
+    "cli",
+    "dev",
+    "development",
+    "run",
+    "scripts"
+  ],
+  "author": "Vine Harvest Group LLC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/syncra.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/syncra/issues"
+  },
+  "homepage": "https://github.com/yourusername/syncra#readme",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "private": true
+  }
 }
