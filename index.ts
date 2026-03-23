@@ -100,6 +100,7 @@ function showHelp(): void {
     frontend:
       command: bun run dev
       color: cyan
+      wait: 2
   cleanup:
     - docker compose down
     - echo "done"
@@ -113,6 +114,7 @@ interface ParsedCommand {
     label: string;
     color: number;
     command: string;
+    wait?: number; // seconds to delay before starting
 }
 
 function parseCommandArg(arg: string, index: number): ParsedCommand {
@@ -154,6 +156,7 @@ function parseCommandArg(arg: string, index: number): ParsedCommand {
 interface SyncraService {
     command: string;
     color?: ColorName;
+    wait?: number; // seconds to delay before starting
 }
 
 interface SyncraYaml {
@@ -205,12 +208,17 @@ async function loadYamlFile(filePath: string): Promise<ResolvedConfig> {
             process.exit(1);
         }
 
+        if (service.wait !== undefined && (typeof service.wait !== 'number' || service.wait < 0)) {
+            console.error(`\x1b[1;31mError: Service "${name}" has an invalid "wait" value (must be a non-negative number of seconds)\x1b[0m`);
+            process.exit(1);
+        }
+
         const colorName = service.color;
         const color = colorName && COLOR_NAMES.includes(colorName)
             ? COLORS[colorName]
             : COLOR_CODES[index % COLOR_CODES.length];
 
-        return { label: name, color, command: service.command };
+        return { label: name, color, command: service.command, wait: service.wait };
     });
 
     const cleanupCommands = Array.isArray(config.cleanup)
@@ -256,10 +264,12 @@ async function resolveConfig(): Promise<ResolvedConfig> {
 
 const { commands, cleanupCommands } = await resolveConfig();
 
-// Spawn all processes
-const processes = commands.map(({ label, color, command }) => {
+// Spawn all processes, supporting optional per-service startup delays
+const processes: ReturnType<typeof Bun.spawn>[] = [];
+const pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+function spawnService(label: string, color: number, command: string): void {
     try {
-        // Wrap command in shell for cross-platform shell execution
         const shellCommand = process.platform === 'win32'
             ? ['cmd', '/c', command]
             : ['/bin/sh', '-c', command];
@@ -269,16 +279,24 @@ const processes = commands.map(({ label, color, command }) => {
             stderr: 'pipe',
         });
 
-        // Start logging streams (don't await, let them run in background)
         logWithPrefix(label, color, proc.stdout);
         logWithPrefix(label, color, proc.stderr);
 
-        return proc;
+        processes.push(proc);
     } catch (error) {
         console.error(`\x1b[1;31mFailed to spawn process [${label}]:\x1b[0m`, error);
         process.exit(1);
     }
-});
+}
+
+for (const { label, color, command, wait } of commands) {
+    if (wait && wait > 0) {
+        const timeout = setTimeout(() => spawnService(label, color, command), wait * 1000);
+        pendingTimeouts.push(timeout);
+    } else {
+        spawnService(label, color, command);
+    }
+}
 
 // Cleanup handler — kills services then runs cleanup commands sequentially
 let isCleaningUp = false;
@@ -286,6 +304,10 @@ let isCleaningUp = false;
 async function cleanup(): Promise<void> {
     if (isCleaningUp) return;
     isCleaningUp = true;
+
+    for (const timeout of pendingTimeouts) {
+        clearTimeout(timeout);
+    }
 
     console.log('\n\x1b[1;33mKilling all processes...\x1b[0m');
     for (const proc of processes) {
