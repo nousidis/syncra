@@ -2,11 +2,11 @@
 
 **A lightweight, fast alternative to Concurrently built for the Bun runtime**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/vineharvestgroup/syncra)
+[![Version](https://img.shields.io/badge/version-1.0.5-blue.svg)](https://github.com/nousidis/syncra)
 [![Bun](https://img.shields.io/badge/bun-%3E=1.0.0-black)](https://bun.sh)
 
-**Author:** Vine Harvest Group LLC
-**Version:** v1.0.4
+**Author:** Noah Pickle
+**Version:** v1.0.5
 
 ## 📖 Description
 
@@ -19,6 +19,8 @@ Perfect for development workflows where you need to run multiple processes simul
 - 🚀 **Fast** - Built on Bun for maximum performance
 - 🎨 **Color-coded output** - Each process gets its own color for easy identification
 - 🏷️ **Custom labels** - Name your processes for clarity
+- 📄 **YAML config** - Define your processes in a `syncra.yaml` file
+- 🧹 **Cleanup commands** - Run teardown commands automatically on exit
 - 🎯 **Simple syntax** - Easy to use command format
 - 🔄 **Concurrent execution** - Run multiple commands simultaneously
 - 🛑 **Graceful shutdown** - Properly handles SIGINT/SIGTERM signals
@@ -49,7 +51,95 @@ yarn add syncra
 
 ## 🚀 Usage
 
-### Basic Syntax
+### YAML File (Recommended)
+
+The easiest way to use Syncra is with a `syncra.yaml` file in your project root. Just run `syncra` with no arguments and it will be picked up automatically.
+
+```yaml
+# syncra.yaml
+services:
+  backend:
+    command: bun run server.ts
+    color: blue
+  frontend:
+    command: bun run dev
+    color: cyan
+  db:
+    command: docker compose up postgres
+    color: green
+```
+
+```bash
+syncra
+```
+
+You can also point to a specific file with `-f`:
+
+```bash
+syncra -f path/to/config.yaml
+# or
+syncra --file path/to/config.yaml
+```
+
+#### YAML Service Options
+
+| Field     | Required | Description                                      |
+|-----------|----------|--------------------------------------------------|
+| `command` | Yes      | The shell command to run                         |
+| `color`   | No       | Output color: `red`, `magenta`, `cyan`, `blue`, `green`, `yellow` |
+
+Colors are auto-assigned in order if not specified.
+
+### Cleanup Commands
+
+Add a top-level `cleanup` key with a list of shell commands to run automatically when Syncra exits (on `Ctrl+C` or `SIGTERM`). Commands run sequentially after all services are killed, and their output is printed under a `[cleanup]` label.
+
+```yaml
+services:
+  backend:
+    command: bun run server.ts
+    color: blue
+  frontend:
+    command: bun run dev
+    color: cyan
+
+cleanup:
+  - docker compose down
+  - rm -rf .tmp
+  - echo "All done"
+```
+
+Cleanup commands run in the order listed and each one completes before the next starts.
+
+#### Real-World Example
+
+```yaml
+# syncra.yaml
+services:
+  api:
+    command: bun run src/api/server.ts
+    color: blue
+  web:
+    command: bun run dev
+    color: magenta
+  db:
+    command: docker compose up postgres
+    color: green
+  redis:
+    command: docker compose up redis
+    color: red
+
+cleanup:
+  - docker compose down
+```
+
+---
+
+### CLI Arguments
+
+You can also pass commands directly as arguments without a config file.
+
+#### Basic Syntax
 
 ```bash
 syncra "command1" "command2" "command3"
@@ -67,17 +157,15 @@ Or using npx:
 npx syncra "command1" "command2" "command3"
 ```
 
-### Examples
+#### Examples
 
-#### 1. Run Multiple Commands
+##### 1. Run Multiple Commands
 
 ```bash
 syncra "docker compose up" "bunx --bun vite"
 ```
 
-This will run both Docker Compose and Vite dev server concurrently, each with a default label and color.
-
-#### 2. Custom Labels
+##### 2. Custom Labels
 
 ```bash
 syncra "container,docker compose up" "vite-dev,bunx --bun vite"
@@ -87,39 +175,19 @@ Output will show:
 - `[container]` for the Docker command
 - `[vite-dev]` for the Vite command
 
-#### 3. Custom Colors and Labels
+##### 3. Custom Colors and Labels
 
 ```bash
 syncra "backend,red,bun run server.ts" "frontend,cyan,bunx --bun vite" "db,green,docker compose up postgres"
 ```
 
-Each process gets a custom label and color for easy visual identification.
-
-#### 4. Quoted Arguments (Complex Commands)
-
-**Simple approach - Use double quotes outside, single quotes inside:**
-
-```bash
-syncra "ticker,red,bun -e \"console.log('Hello')\""
-```
-
-**For complex commands with nested quotes:**
+##### 4. Quoted Arguments (Complex Commands)
 
 ```bash
 syncra "ticker,red,bun -e \"setInterval(() => console.log('Tick'), 1000)\""
 ```
 
-**Multiple processes with quotes:**
-
-```bash
-syncra \
-  "api,blue,bun -e \"Bun.serve({ port: 3000, fetch: () => new Response('OK') })\"" \
-  "log,green,bun -e \"setInterval(() => console.log('Running...'), 2000)\""
-```
-
-Syncra properly handles quoted arguments, allowing you to pass complex JavaScript code or commands with special characters.
-
-#### 5. Real-World Development Setup
+##### 5. Real-World Development Setup
 
 ```bash
 syncra \
@@ -129,18 +197,7 @@ syncra \
   "redis,red,docker compose up -d redis"
 ```
 
-## 🎨 Available Colors
-
-- `red`
-- `magenta`
-- `cyan`
-- `blue`
-- `green`
-- `yellow`
-
-If you don't specify a color, Syncra will automatically cycle through the available colors for each process.
-
-## 📝 Command Format
+#### CLI Command Format
 
 Commands can be specified in three formats:
 
@@ -154,68 +211,78 @@ Commands can be specified in three formats:
 3. **Label, color, and command**: `'label,color,command arg1 arg2'`
    - Full customization
 
-## 💡 Quoting Rules
-
-**No escaping needed!** Use this simple pattern:
+#### Quoting Rules
 
 - **Outer quotes:** Always use double quotes (`"`)
 - **Inner quotes:** Use single quotes, when needed only inside (`'`)
 
-### Examples:
-
-✅ **Good - Escape Double Quotes string:**
 ```bash
+# Good
 syncra "test,bun -e \"console.log('Hello')\""
+
+# Avoid - single quotes outside break parsing
+syncra 'test,bun -e "console.log('Hello')"'
 ```
 
-❌ **Avoid – Single Quotes strings:**
-```bash
-syncra 'test,bun -e "console.log('Hello')"' 
-```
-This command will not execute because bun -e requires double quotes for the command string.
+---
 
-### Why This Works:
+## 🎨 Available Colors
 
-When you use double quotes on the outside, your shell passes the inner double quotes to Syncra, which then properly parses them. Single quotes inside don't need escaping because they're inside double quotes.
-
-### Real-World Example:
-
-```bash
-# Start a Bun server with inline code
-syncra "server,blue,bun -e \"Bun.serve({ port: 3000, fetch: () => new Response('Hello!') })\""
-```
+- `red`
+- `magenta`
+- `cyan`
+- `blue`
+- `green`
+- `yellow`
 
 ## 🛠️ Common Use Cases
 
 ### Full-Stack Development
 
-```bash
-syncra \
-  "backend,blue,bun run server.ts" \
-  "frontend,cyan,bun run dev" \
-  "tailwind,green,bunx tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
+```yaml
+services:
+  backend:
+    command: bun run server.ts
+    color: blue
+  frontend:
+    command: bun run dev
+    color: cyan
+  tailwind:
+    command: bunx tailwindcss -i ./src/input.css -o ./dist/output.css --watch
+    color: green
 ```
 
 ### Microservices
 
-```bash
-syncra \
-  "auth,red,bun run services/auth/index.ts" \
-  "api,blue,bun run services/api/index.ts" \
-  "worker,green,bun run services/worker/index.ts"
+```yaml
+services:
+  auth:
+    command: bun run services/auth/index.ts
+    color: red
+  api:
+    command: bun run services/api/index.ts
+    color: blue
+  worker:
+    command: bun run services/worker/index.ts
+    color: green
 ```
 
 ### Docker + Development Server
 
-```bash
-syncra \
-  "containers,yellow,docker compose up" \
-  "dev,magenta,bun --hot index.ts"
+```yaml
+services:
+  containers:
+    command: docker compose up
+    color: yellow
+  dev:
+    command: bun --hot index.ts
+    color: magenta
+
+cleanup:
+  - docker compose down
 ```
 
 ## 🆘 Help
-
-Display help information:
 
 ```bash
 syncra --help
@@ -225,26 +292,15 @@ syncra -h
 
 ## 🧪 Testing
 
-Run the test suite:
-
 ```bash
 bun test
 ```
-
-The test suite includes integration tests that verify:
-- Help flag functionality
-- Command execution and output capture
-- Multiple concurrent processes
-- Custom labels and colors
-- ANSI color code verification
 
 ## 🛑 Stopping Processes
 
 Press `Ctrl+C` to gracefully stop all running processes. Syncra handles cleanup automatically.
 
 ## 🔧 Development
-
-This project was created using `bun init` in Bun v1.3.6.
 
 ### Project Structure
 
@@ -264,10 +320,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📞 Support
-
-For issues and questions, please open an issue on the GitHub repository.
-
 ---
 
-Built with ❤️ by Vine Harvest Group LLC using [Bun](https://bun.sh)
+Built with ❤️ by Noah Pickle using [Bun](https://bun.sh)

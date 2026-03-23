@@ -1,4 +1,6 @@
 #!/usr/bin/env bun
+import { load as parseYaml } from 'js-yaml';
+
 const args = Bun.argv.slice(2);
 
 // Color palette for process output
@@ -76,17 +78,31 @@ async function logWithPrefix(name: string, color: number, stream: ReadableStream
 // Show help message
 function showHelp(): void {
     console.log(`
-\x1b[1;36mSyncra v1.0.4\x1b[0m
-\x1b[1;36mAuthor:\x1b[0m Vine Harvest Group LLC
+\x1b[1;36mSyncra v1.0.5\x1b[0m
+\x1b[1;36mAuthor:\x1b[0m https://github.com/nousidis
 \x1b[1;36mDescription:\x1b[0m A simple replacement for Concurrently using Bun runtime
 
 \x1b[1;36mUsage:\x1b[0m
   syncra "command1" "command2" ...
+  syncra [-f syncra.yaml]
 
 \x1b[1;36mExamples:\x1b[0m
   syncra "docker compose up" "bunx --bun vite"
   syncra "container,docker compose up" "bun-cli,bunx --bun vite"
   syncra "backend,red,bun run server.ts" "frontend,cyan,bunx --bun vite"
+  syncra -f syncra.yaml
+
+\x1b[1;36mYAML file (syncra.yaml):\x1b[0m
+  services:
+    backend:
+      command: bun run server.ts
+      color: blue
+    frontend:
+      command: bun run dev
+      color: cyan
+  cleanup:
+    - docker compose down
+    - echo "done"
 
 \x1b[1;36mColors:\x1b[0m ${COLOR_NAMES.join(', ')}
 `);
@@ -134,14 +150,111 @@ function parseCommandArg(arg: string, index: number): ParsedCommand {
     return { label, color, command: commandStr };
 }
 
-// Check for help flag early
-if (args.length === 0 || args.some(arg => ['-h', '--help'].includes(arg))) {
-    showHelp();
-    process.exit(0);
+// YAML file schema
+interface SyncraService {
+    command: string;
+    color?: ColorName;
 }
 
-// Parse all command arguments
-const commands = args.map((arg, index) => parseCommandArg(arg, index));
+interface SyncraYaml {
+    services: Record<string, SyncraService>;
+    cleanup?: string[];
+}
+
+interface ResolvedConfig {
+    commands: ParsedCommand[];
+    cleanupCommands: string[];
+}
+
+async function loadYamlFile(filePath: string): Promise<ResolvedConfig> {
+    const file = Bun.file(filePath);
+    const exists = await file.exists();
+
+    if (!exists) {
+        console.error(`\x1b[1;31mError: File not found: ${filePath}\x1b[0m`);
+        process.exit(1);
+    }
+
+    const text = await file.text();
+    let parsed: unknown;
+
+    try {
+        parsed = parseYaml(text);
+    } catch (err) {
+        console.error(`\x1b[1;31mError: Failed to parse YAML: ${(err as Error).message}\x1b[0m`);
+        process.exit(1);
+    }
+
+    const config = parsed as SyncraYaml;
+
+    if (!config?.services || typeof config.services !== 'object') {
+        console.error('\x1b[1;31mError: YAML file must have a "services" map\x1b[0m');
+        process.exit(1);
+    }
+
+    const entries = Object.entries(config.services);
+
+    if (entries.length === 0) {
+        console.error('\x1b[1;31mError: No services defined in YAML file\x1b[0m');
+        process.exit(1);
+    }
+
+    const commands = entries.map(([name, service], index) => {
+        if (!service?.command) {
+            console.error(`\x1b[1;31mError: Service "${name}" is missing a "command"\x1b[0m`);
+            process.exit(1);
+        }
+
+        const colorName = service.color;
+        const color = colorName && COLOR_NAMES.includes(colorName)
+            ? COLORS[colorName]
+            : COLOR_CODES[index % COLOR_CODES.length];
+
+        return { label: name, color, command: service.command };
+    });
+
+    const cleanupCommands = Array.isArray(config.cleanup)
+        ? config.cleanup.filter(cmd => typeof cmd === 'string' && cmd.trim())
+        : [];
+
+    return { commands, cleanupCommands };
+}
+
+// Resolve config from CLI args or YAML file
+async function resolveConfig(): Promise<ResolvedConfig> {
+    // Check for help flag
+    if (args.length === 0 || args.some(arg => ['-h', '--help'].includes(arg))) {
+        // If no args, check for default yaml files before showing help
+        if (args.length === 0) {
+            for (const candidate of ['syncra.yaml', 'syncra.yml']) {
+                if (await Bun.file(candidate).exists()) {
+                    return loadYamlFile(candidate);
+                }
+            }
+        }
+        showHelp();
+        process.exit(0);
+    }
+
+    // Handle -f / --file flag
+    const fileFlag = args.findIndex(a => a === '-f' || a === '--file');
+    if (fileFlag !== -1) {
+        const filePath = args[fileFlag + 1];
+        if (!filePath) {
+            console.error('\x1b[1;31mError: -f requires a file path\x1b[0m');
+            process.exit(1);
+        }
+        return loadYamlFile(filePath);
+    }
+
+    // Fall back to positional CLI args (no cleanup support for inline args)
+    return {
+        commands: args.map((arg, index) => parseCommandArg(arg, index)),
+        cleanupCommands: [],
+    };
+}
+
+const { commands, cleanupCommands } = await resolveConfig();
 
 // Spawn all processes
 const processes = commands.map(({ label, color, command }) => {
@@ -167,8 +280,13 @@ const processes = commands.map(({ label, color, command }) => {
     }
 });
 
-// Cleanup handler
-function cleanup(): void {
+// Cleanup handler — kills services then runs cleanup commands sequentially
+let isCleaningUp = false;
+
+async function cleanup(): Promise<void> {
+    if (isCleaningUp) return;
+    isCleaningUp = true;
+
     console.log('\n\x1b[1;33mKilling all processes...\x1b[0m');
     for (const proc of processes) {
         try {
@@ -177,10 +295,29 @@ function cleanup(): void {
             // Process may already be dead
         }
     }
+
+    if (cleanupCommands.length > 0) {
+        console.log('\x1b[1;33mRunning cleanup commands...\x1b[0m');
+        for (const cmd of cleanupCommands) {
+            const shellCommand = process.platform === 'win32'
+                ? ['cmd', '/c', cmd]
+                : ['/bin/sh', '-c', cmd];
+
+            const proc = Bun.spawn(shellCommand, {
+                stdout: 'pipe',
+                stderr: 'pipe',
+            });
+
+            logWithPrefix('cleanup', COLORS.yellow, proc.stdout);
+            logWithPrefix('cleanup', COLORS.yellow, proc.stderr);
+
+            await proc.exited;
+        }
+    }
+
     process.exit(0);
 }
 
 // Register cleanup handlers
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
-process.on('exit', cleanup);

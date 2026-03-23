@@ -23,23 +23,27 @@
     "run",
     "scripts"
   ],
-  "author": "Vine Harvest Group LLC",
+  "author": "Noah Pickle",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vineharvestgroup/syncra.git"
+    "url": "https://github.com/nousidis/syncra.git"
   },
   "bugs": {
-    "url": "https://github.com/vineharvestgroup/syncra/issues"
+    "url": "https://github.com/nousidis/syncra/issues"
   },
-  "homepage": "https://github.com/vineharvestgroup/syncra#readme",
+  "homepage": "https://github.com/nousidis/syncra#readme",
   "engines": {
     "bun": ">=1.0.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.1"
   }
 }
